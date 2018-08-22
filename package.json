@@ -1,0 +1,20 @@
+{
+  "name": "fab-static",
+  "version": "0.0.1",
+  "description": "Front-end Application Bundle generator for (mostly) static applications.",
+  "main": "index.js",
+  "bin": {
+    "fab-static": "bin.js"
+  },
+  "scripts": {
+    "do": "fab-static testing blah=true"
+  },
+  "repository": "git@github.com:bitgenics/fab-static.git",
+  "author": "Erwin van der Koogh <hello@bitgenics.io>",
+  "license": "MIT",
+  "dependencies": {
+    "fs-extra": "^7.0.0",
+    "globby": "^8.0.1",
+    "webpack": "^4.17.1"
+  }
+}
