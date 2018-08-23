@@ -29,7 +29,9 @@ const renderGet = (req, res, settings) => {
   try {
     const pathname = getPath(req.url)
     console.log({pathname})
-    if(config.redirectToAssets && pathname.startsWith()) {
+    console.log({config})
+    if(config.redirectToAssets && pathname.startsWith(`/${config.staticDirName}`)) {
+      console.log('redirecting!')
       const location = pathname.replace(STATIC_DIR_PATH, '/_assets')
       return sendRedirect(res, location)
     }
