@@ -95,6 +95,8 @@ const doBundle = async (src, dest) => {
   await bundleServer(src, dest)
   console.log('Zipping it all up')
   await doZip(dest)
+  console.log('Deleting package directory')
+  await fse.remove(src)
 }
 
 module.exports = doBundle
