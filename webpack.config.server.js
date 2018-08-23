@@ -12,7 +12,6 @@ const createConfig = (srcDir, targetDir) => {
     resolve: {
       alias: {
         '_includes': path.resolve(srcDir, '_includes.js'),
-        'fab-fs': path.resolve(srcDir, 'fab-fs.js'),
       },
       modules: [
         'node_modules',
