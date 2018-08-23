@@ -6,9 +6,6 @@
   "bin": {
     "fab-static": "bin.js"
   },
-  "scripts": {
-    "do": "fab-static testing blah=true"
-  },
   "repository": "git@github.com:bitgenics/fab-static.git",
   "author": "Erwin van der Koogh <hello@bitgenics.io>",
   "license": "MIT",
