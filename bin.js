@@ -32,7 +32,6 @@ const getConfig = () => {
 
 const run = async () => {
   const config = getConfig()
-  console.log({config})
   await toIntermediate(config)
   await doBundle(config.packageDir, config.distDir)
 }

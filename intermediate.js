@@ -21,11 +21,9 @@ const resolvePaths = (config) => {
 const copyFiles = async (glob, src, dest) => {
   fse.ensureDir(dest)
   const files = await globby(glob, { cwd: src })
-  console.log({files})
   const promises = files.map((file) => {
     const srcFile = path.join(src, file)
     const destFile = path.join(dest, file)
-    console.log(`Copying ${srcFile} to ${destFile}`)
     return fse.copy(srcFile, destFile)
   })
   await Promise.all(promises)
@@ -59,7 +57,6 @@ const transformHtml = async (file, src, dest) => {
     encoding: 'utf-8'
   })
   const escaped = html.replace(/(\$\{)/g, '\\${')
-  console.log({escaped})
   const $ = cheerio.load(escaped)
   $('head').prepend(
     `<script type="application/javascript">${initCode}</script>`
@@ -67,7 +64,6 @@ const transformHtml = async (file, src, dest) => {
   $('script').attr('nonce', '${input.nonce}')
   const js = await compile($.html(), path.resolve(src, file))
   const jsFile = path.resolve(dest, `${file}.js`)
-  console.log({jsFile})
   await fse.writeFile(jsFile, js)
   return jsFile
 }
@@ -88,15 +84,12 @@ const transformHtmls = async (config) => {
     return await transformHtml(file, config.buildDir, config.serverDir)
   })
   const jsFiles = await Promise.all(promises)
-  console.log({jsFiles})
   const urls = {}
   files.forEach((file, index) => {
     urls[file] = `require('${jsFiles[index]}')`
   })
-  console.log({urls})
   const htmlsFile = path.join(config.serverDir, '_htmls.js')
   const code = generateCode(urls)
-  console.log({code})
   fse.writeFile(htmlsFile, code)
 }
 
@@ -105,7 +98,6 @@ const createServer = async (config) => {
     redirectToAssets: config.redirectToAssets,
     staticDirName: config.staticDirName,
     cacheRedirect: config.cacheRedirect,
-    cacheStatic: config.cacheStatic,
   }
   await fse.ensureDir(config.serverDir)
   const hostConfigPath = path.join(config.serverDir, 'config.js')
@@ -118,9 +110,13 @@ const toIntermediate = async (config) => {
   resolvePaths(config)
   await fse.remove(config.packageDir)
   await fse.remove(config.distDir)
+  console.log('Copying static assets')
   await copyAssets(config)
+  console.log('Copying remaining assets')
   await copyIncludes(config)
+  console.log('Injecting settings code into HTML files')
   await transformHtmls(config)
+  console.log('Generating the server code')
   await createServer(config)
 }
 

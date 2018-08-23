@@ -54,9 +54,7 @@ const bundleAssets = async (packageDir, distDir) => {
 
 const webpackerize = async (tmpServerDir, distDir) => {
   const distServerDir = path.join(distDir, 'server')
-  console.log({distServerDir})
   const server_config = createWebpackConfig(tmpServerDir, distServerDir)
-  console.log({server_config})
 
   return new Promise((resolve, reject) => {
     webpack(server_config, (err, stats) => {
@@ -91,8 +89,11 @@ const doZip = async (distDir) => {
 const doBundle = async (src, dest) => {
   await fse.emptyDir(dest)
   const config = require(path.join(src, 'bundleConfig.js'))
+  console.log('Bundling static assets')
   await bundleAssets(src, dest)
+  console.log('Bundling server-side code')
   await bundleServer(src, dest)
+  console.log('Zipping it all up')
   await doZip(dest)
 }
 

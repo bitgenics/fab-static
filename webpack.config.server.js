@@ -2,7 +2,6 @@ const path = require('path')
 const webpack = require('webpack')
 
 const createConfig = (srcDir, targetDir) => {
-  console.log(path.resolve(__dirname, 'node_modules'))
   const options = {
     mode: 'production',
     entry: {
