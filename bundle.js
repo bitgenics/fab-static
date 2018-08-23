@@ -80,7 +80,7 @@ const bundleServer = async (src, dest) => {
 const doZip = async (distDir) => {
   const zipfile = path.join(distDir, 'fab.zip')
   const options = {
-    includes: ['server/**', '_assets/**'],
+    includes: ['./server/**', './_assets/**'],
     cwd: distDir
   }
   await zip(distDir, zipfile, options)
