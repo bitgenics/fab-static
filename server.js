@@ -1,10 +1,19 @@
 const url_parse = require('url').parse
 const mime = require('mime-types')
 
-const files = require ("./_includes.js")
 const config = require('./config')
 
 const STATIC_DIR_PATH = `/${config.staticDirName}`
+
+let files = []
+let htmls = []
+try {
+  files = require("./_includes.js")
+  htmls = require('./_htmls.js')
+} catch(e) {}
+
+console.log({files})
+console.log({htmls})
 
 const getPath = url => {
   let pathname = url_parse(url).pathname
@@ -14,48 +23,86 @@ const getPath = url => {
   return pathname
 }
 
-const sendRedirect = (res, location) => {
-  res.statusCode = 302
-  res.setHeader('Cache-Control', `public, max-age=${config.cacheRedirect}`)
-  res.setHeader('Location', location)
-}
-
 const getContentType = pathname => {
   const mimeType = mime.lookup(pathname)
   return mimeType ? mime.contentType(mimeType) : 'text/html; charset=utf-8'
 }
 
-const renderGet = (req, res, settings) => {
-  try {
-    const pathname = getPath(req.url)
-    console.log({pathname})
-    console.log({config})
-    if(config.redirectToAssets && pathname.startsWith(`/${config.staticDirName}`)) {
-      console.log('redirecting!')
-      const location = pathname.replace(STATIC_DIR_PATH, '/_assets')
-      return sendRedirect(res, location)
-    }
-    
+const handleRedirectToAssets = (req, res, settings, next) => {
+  const pathname = getPath(req.url)
+  if(config.redirectToAssets && pathname.startsWith(`/${config.staticDirName}`)) {
+    console.log('redirecting!')
+    const location = pathname.replace(STATIC_DIR_PATH, '/_assets')
+    res.statusCode = 302
+    res.setHeader('Cache-Control', `public, max-age=${config.cacheRedirect}`)
+    res.setHeader('Location', location)
+    res.end()
+  } else {
+    next()
+  }
+}
+
+const handleHTML = (req, res, settings, next) => {
+  const pathname = getPath(req.url)
+  if(htmls[pathname]) {
     res.statusCode = 200
     res.setHeader('Content-Type', getContentType(pathname))
-    const content = files[pathname]
+    res.setHeader('Cache-Control', 'no-cache')
+    const html = htmls[pathname].renderToString({
+      settings,
+      nonce: 'abcde12345'
+    })
+    return res.end(html, 'utf-8')
+  } else {
+    next()
+  }
+}
 
-    if (content instanceof String) {
-      res.setHeader('Cache-Control', `public, max-age=${config.cacheStatic}`)
-      res.end(content, 'utf-8')
-    } else if (content instanceof Buffer) {
-      res.setHeader('Cache-Control', `public, max-age=${config.cacheStatic}`)
-      res.end(content)
-    } else if (content.renderToString) {
-      res.setHeader('Cache-Control', 'no-cache')
-      const html = content.renderToString({
-        settings,
-        nonce: 'abcde12345'
+const handleFiles = (req, res, _, next) => {
+  const pathname = getPath(req.url)
+  if(files[pathname]) {
+    const content = files[pathname]
+    const charset = content instanceof String ? 'utf-8' : undefined
+    res.statusCode = 200
+    res.setHeader('Content-Type', getContentType(pathname))
+    res.setHeader('Cache-Control', `public, max-age=${config.cacheStatic}`)
+    res.end(content, charset)
+  } else {
+    next()
+  }
+}
+
+const handle404 = (_, res) => {
+  res.statusCode = 404
+  res.end()
+} 
+
+const getRequestHandler = (handlers) => {
+  handlers.push(handle404)
+  return (req, res, settings) => {
+    let count = 0
+    const handle = () => {
+      console.log({count})
+      handlers[count](req, res, settings, () => {
+        count ++
+        handle()
       })
-      res.end(html, 'utf-8')
-    } else {
-      res.statusCode = 404
     }
+    handle()
+  }
+}
+
+const handlers = [
+  handleRedirectToAssets,
+  handleHTML,
+  handleFiles,
+]
+const handler = getRequestHandler(handlers)
+
+const renderGet = (req, res, settings) => {
+  try {
+    console.log(getPath(req.url))
+    handler(req, res, settings)
   } catch (e) {
     if (!res.headersSent) {
       res.statusCode = 500
