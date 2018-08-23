@@ -1,8 +1,10 @@
 const path = require('path')
+const util = require('util')
 
 const fse = require('fs-extra')
 const globby = require('globby')
 const webpack = require('webpack')
+const zip = util.promisify(require('deterministic-zip'))
 
 const createWebpackConfig = require('./webpack.config.server.js')
 
@@ -77,11 +79,21 @@ const bundleServer = async (src, dest) => {
   await fse.remove(tmpDir)
 }
 
+const doZip = async (distDir) => {
+  const zipfile = path.join(distDir, 'fab.zip')
+  const options = {
+    includes: ['server/**', '_assets/**'],
+    cwd: distDir
+  }
+  await zip(distDir, zipfile, options)
+}
+
 const doBundle = async (src, dest) => {
   await fse.emptyDir(dest)
   const config = require(path.join(src, 'bundleConfig.js'))
   await bundleAssets(src, dest)
   await bundleServer(src, dest)
+  await doZip(dest)
 }
 
 module.exports = doBundle
