@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const fse = require('fs-extra')
 
 const doBundle = require('./bundle')
