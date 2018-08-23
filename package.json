@@ -1,6 +1,6 @@
 {
   "name": "fab-static",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Front-end Application Bundle generator for (mostly) static applications.",
   "main": "index.js",
   "bin": {
