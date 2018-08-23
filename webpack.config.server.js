@@ -2,6 +2,7 @@ const path = require('path')
 const webpack = require('webpack')
 
 const createConfig = (srcDir, targetDir) => {
+  console.log(path.resolve(__dirname, 'node_modules'))
   const options = {
     mode: 'production',
     entry: {
@@ -13,6 +14,10 @@ const createConfig = (srcDir, targetDir) => {
         '_includes': path.resolve(srcDir, '_includes.js'),
         'fab-fs': path.resolve(srcDir, 'fab-fs.js'),
       },
+      modules: [
+        'node_modules',
+        path.resolve(__dirname, 'node_modules')
+      ],
     },
     resolveLoader: {
       modules: ['node_modules', path.resolve(__dirname, 'node_modules')]

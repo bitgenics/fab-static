@@ -128,10 +128,6 @@ const copyTmpServerFiles = async (packageDir, serverDestDir) => {
   await fse.ensureDir(serverSrcDir)
 
   await fse.copy(serverSrcDir, serverDestDir)
-
-  const fabfsFileSrc = path.join(__dirname, 'fab-fs.js')
-  const fabfsFileDest = path.join(serverDestDir, '_fab-fs.js')
-  await fse.copy(fabfsFileSrc, fabfsFileDest)
 }
 
 const bundleAssets = async (packageDir, distDir) => {
