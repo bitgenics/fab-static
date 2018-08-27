@@ -5,8 +5,8 @@ const config = require('./config')
 
 const STATIC_DIR_PATH = `/${config.staticDirName}`
 
-let files = []
-let htmls = []
+let files = {}
+let htmls = {}
 try {
   files = require("./_includes.js")
   htmls = require('./_htmls.js')
