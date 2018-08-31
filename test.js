@@ -2,8 +2,11 @@ const fs = require('fs')
 const http = require('http')
 const url_parse = require('url').parse
 const mime = require('mime-types')
+const path = require('path')
 
-const fab = require('./test/fab-dist/server/bundle.js')
+const dir = path.resolve(process.argv[2] || './test/fab-dist')
+
+const fab = require(`${dir}/server/bundle.js`)
 
 const getContentType = pathname => {
   const mimeType = mime.lookup(pathname)
@@ -13,15 +16,13 @@ const getContentType = pathname => {
 http.createServer(async (req, res) => {
 	const pathname = url_parse(req.url).pathname
 	if(pathname.startsWith('/_assets')) {
-		fs.readFile('./test/fab-dist' + pathname, (err, data) => {
+		fs.readFile(`${dir}${pathname}`, (err, data) => {
 			res.setHeader('Content-Type', getContentType(pathname))
 			res.end(data)
 		})
 	} else {
 		await fab.renderGet(req, res, {})
 	}
-
-	
 }).listen(3005)
 
 console.log('ready')
