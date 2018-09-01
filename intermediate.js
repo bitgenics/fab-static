@@ -4,9 +4,8 @@ const util = require('util')
 const cheerio = require('cheerio')
 const fse = require('fs-extra')
 const globby = require('globby')
-const compiler = require('marko/compiler')
 
-const compile = util.promisify(compiler.compile)
+const templ = require('./template')
 
 const resolvePaths = (config) => {
   config.distDir = path.resolve(config.outputDir, config.distDir)
@@ -47,22 +46,24 @@ const copyIncludes = async (config) => {
 }
 
 const initCode =
-  'var ENV_SETTINGS = ${JSON.stringify(input.settings)};\n' +
-  'window.EnvSettings = ENV_SETTINGS;\n' +
-  "var CSP_NONCE = '${input.nonce}';\n" +
-  'window.CspNonce = CSP_NONCE;\n'
+  'var ENV_SETTINGS = {{settings}}\n \
+  window.EnvSettings = ENV_SETTINGS\n \
+  var CSP_NONCE = "{{nonce}}"\n \
+  window.CspNonce = CSP_NONCE\n'
 
 const transformHtml = async (file, src, dest) => {
   const html = await fse.readFile(path.resolve(src, file), {
     encoding: 'utf-8'
   })
-  const escaped = html.replace(/(\$\{)/g, '\\${')
+  let escaped = html.replace(/({{)/g, '\\{\\{')
+  escaped = escaped.replace(/(}})/g, '\\}\\}')
   const $ = cheerio.load(escaped)
   $('head').prepend(
     `<script type="application/javascript">${initCode}</script>`
   )
-  $('script').attr('nonce', '${input.nonce}')
-  const js = await compile($.html(), path.resolve(src, file))
+  $('script').attr('nonce', '{{nonce}}')
+
+  const js = templ($.html())
   const jsFile = path.resolve(dest, `${file}.js`)
   await fse.writeFile(jsFile, js)
   return jsFile

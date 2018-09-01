@@ -9,8 +9,15 @@ let files = {}
 let htmls = {}
 try {
   files = require("./_includes.js")
+} catch(e) {
+  console.log('_includes,', e)
+}
+
+try {
   htmls = require('./_htmls.js')
-} catch(e) {}
+} catch(e) {
+  console.log('_htmls,', e)
+}
 
 console.log({files})
 console.log({htmls})
@@ -48,11 +55,12 @@ const handleHTML = (req, res, settings, next) => {
     res.statusCode = 200
     res.setHeader('Content-Type', getContentType(pathname))
     res.setHeader('Cache-Control', 'no-cache')
-    const html = htmls[pathname].renderToString({
-      settings,
+    const data = {
+      settings: JSON.stringify(settings),
       nonce: 'abcde12345'
-    })
-    return res.end(html, 'utf-8')
+    }
+    htmls[pathname].renderToStream(res, data)
+    return res.end()
   } else {
     next()
   }
