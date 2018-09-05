@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const fse = require('fs-extra')
+const path = require('path')
 
 const doBundle = require('./bundle')
 const toIntermediate = require('./intermediate')
@@ -20,11 +21,11 @@ const defaultConfig = {
 }
 
 const getConfig = () => {
-  const customConfigLocation = process.argv.length > 2 ? 
-    process.argv[3] : './fab-static.config.js'
+  const customConfigLocation = process.argv.length > 2 ?
+    process.argv[2] : './fab-static.config.js'
 
   if(fse.existsSync(customConfigLocation)) {
-    const customConfig = require(customConfigLocation)
+    const customConfig = require(path.resolve(customConfigLocation))
     return Object.assign({}, defaultConfig, customConfig)
   } else {
     return defaultConfig
