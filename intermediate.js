@@ -111,8 +111,10 @@ const toIntermediate = async (config) => {
   resolvePaths(config)
   await fse.remove(config.packageDir)
   await fse.remove(config.distDir)
-  console.log('Copying static assets')
-  await copyAssets(config)
+  if (config.redirectToAssets) {
+    console.log('Copying static assets')
+    await copyAssets(config)
+  }
   console.log('Copying remaining assets')
   await copyIncludes(config)
   console.log('Injecting settings code into HTML files')
