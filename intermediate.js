@@ -11,7 +11,6 @@ const resolvePaths = (config) => {
   config.distDir = path.resolve(config.outputDir, config.distDir)
   config.tmpDir = path.resolve(config.distDir, 'tmp')
   config.buildDir = path.resolve(config.inputDir, config.buildDir)
-  config.staticDir = path.resolve(config.buildDir, config.staticDirName)
   config.packageDir = path.resolve(config.outputDir, 'fab-package')
   config.serverDir = path.join(config.packageDir, 'server')
   return config
@@ -28,9 +27,9 @@ const copyFiles = async (glob, src, dest) => {
   await Promise.all(promises)
 }
 
-const copyAssets = async (config) => {
+const copyAssets = async (config, dirName = '_assets') => {
   const assetsDir = path.join(config.packageDir, '_assets')
-  await fse.copy(config.staticDir, assetsDir)
+  await fse.copy(path.resolve(config.buildDir, dirName), assetsDir)
 }
 
 const copyIncludes = async (config) => {
@@ -112,7 +111,10 @@ const toIntermediate = async (config) => {
   await fse.remove(config.packageDir)
   await fse.remove(config.distDir)
   if (config.redirectToAssets) {
-    console.log('Copying static assets')
+    console.log(`Copying assets from ${config.staticDirName}`)
+    await copyAssets(config, config.staticDirName)
+  } else {
+    console.log(`Copying _assets dir`)
     await copyAssets(config)
   }
   console.log('Copying remaining assets')
