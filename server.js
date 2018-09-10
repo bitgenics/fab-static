@@ -54,7 +54,7 @@ const handleRedirectToAssets = (req, res, settings, next) => {
 
 const handleHTML = (req, res, settings, next) => {
   const pathname = getPath(req.url)
-  const accepts_html = (req.headers.Accept || '').match(/html/)
+  const accepts_html = (req.headers.accept || '').match(/html/)
   const html_handler =
     htmls[pathname] ? htmls[pathname] : accepts_html ? htmls['/200.html'] : null
 
@@ -66,7 +66,7 @@ const handleHTML = (req, res, settings, next) => {
       settings: JSON.stringify(settings),
       nonce: 'abcde12345'
     }
-    htmls[pathname].renderToStream(res, data)
+    html_handler.renderToStream(res, data)
     return res.end()
   } else {
     next()
