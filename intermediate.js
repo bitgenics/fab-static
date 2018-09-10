@@ -34,7 +34,10 @@ const copyAssets = async (config, dirName = '_assets') => {
 
 const copyIncludes = async (config) => {
   const includeDir = path.resolve(config.packageDir, 'include')
-  config.includeFiles.push(`!${config.staticDirName}`)
+  config.includeFiles.push(`!_assets`)
+  if (config.redirectToAssets) {
+    config.includeFiles.push(`!${config.staticDirName}`)
+  }
   config.includeFiles.push('!**/*.html')
   await copyFiles(config.includeFiles, config.buildDir, includeDir)
   const bundleConfig = {
