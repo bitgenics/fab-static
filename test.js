@@ -21,7 +21,10 @@ http.createServer(async (req, res) => {
 			res.end(data)
 		})
 	} else {
-		await fab.renderGet(req, res, {})
+		await fab.renderGet(req, res, {
+			injected: 'variables',
+			should: 'work!'
+		})
 	}
 }).listen(3005)
 
