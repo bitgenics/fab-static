@@ -5,42 +5,30 @@ const createConfig = (srcDir, targetDir) => {
   const options = {
     mode: 'production',
     entry: {
-      'bundle': [path.resolve(srcDir, 'entry.js')]
+      bundle: [path.resolve(srcDir, 'entry.js')],
     },
     target: 'node',
     resolve: {
       alias: {
-        '_includes': path.resolve(srcDir, '_includes.js'),
+        _includes: path.resolve(srcDir, '_includes.js'),
       },
-      modules: [
-        'node_modules',
-        path.resolve(__dirname, 'node_modules')
-      ],
+      modules: ['node_modules', path.resolve(__dirname, 'node_modules')],
     },
     resolveLoader: {
-      modules: ['node_modules', path.resolve(__dirname, 'node_modules')]
-    },
-    module: {
-      rules: [
-        {
-          test: /\.marko$/,
-          loader: 'marko-loader',
-          options: {
-            target: 'browser'
-          }
-        }
-      ]
+      modules: ['node_modules', path.resolve(__dirname, 'node_modules')],
     },
     optimization: {
-      minimize: false
+      minimize: false,
     },
     output: {
       path: targetDir,
       filename: '[name].js',
       library: 'server',
-      libraryTarget: 'commonjs2'
+      libraryTarget: 'commonjs2',
     },
-    plugins: [new webpack.DefinePlugin({ 'process.env': { BUNDLE: '"true"' } })]
+    plugins: [
+      new webpack.DefinePlugin({ 'process.env': { BUNDLE: '"true"' } }),
+    ],
   }
   return options
 }
