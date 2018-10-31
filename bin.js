@@ -5,26 +5,23 @@ const path = require('path')
 const doBundle = require('./bundle')
 const toIntermediate = require('./intermediate')
 
-const HOUR_IN_SEC = 60 * 60
-
 const defaultConfig = {
   buildDir: 'build',
-  cacheRedirect: HOUR_IN_SEC,
-  cacheStatic: HOUR_IN_SEC,
   distDir: 'fab-dist',
   includeFiles: ['**/*', '!asset-manifest.json'],
   injectHtmls: true,
   inputDir: '.',
   outputDir: '.',
   redirectToAssets: true,
+  serverDir: 'server',
   staticDirName: 'static',
 }
 
 const getConfig = () => {
-  const customConfigLocation = process.argv.length > 2 ?
-    process.argv[2] : './fab-static.config.js'
+  const customConfigLocation =
+    process.argv.length > 2 ? process.argv[2] : './fab-static.config.js'
 
-  if(fse.existsSync(customConfigLocation)) {
+  if (fse.existsSync(customConfigLocation)) {
     const customConfig = require(path.resolve(customConfigLocation))
     return Object.assign({}, defaultConfig, customConfig)
   } else {

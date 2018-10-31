@@ -12,7 +12,8 @@ const resolvePaths = (config) => {
   config.tmpDir = path.resolve(config.distDir, 'tmp')
   config.buildDir = path.resolve(config.inputDir, config.buildDir)
   config.packageDir = path.resolve(config.outputDir, 'fab-package')
-  config.serverDir = path.join(config.packageDir, 'server')
+  config.serverSrcDir = path.resolve(config.inputDir, config.serverDir)
+  config.serverDestDir = path.join(config.packageDir, 'server')
   return config
 }
 
@@ -44,7 +45,10 @@ const copyIncludes = async (config) => {
     injectHtmls: config.injectHtmls,
   }
   const bundleConfigPath = path.join(config.packageDir, 'bundleConfig.js')
-  await fse.writeFile(bundleConfigPath, `module.exports = ${JSON.stringify(bundleConfig)}`)
+  await fse.writeFile(
+    bundleConfigPath,
+    `module.exports = ${JSON.stringify(bundleConfig)}`
+  )
 }
 
 const initCode =
@@ -55,7 +59,7 @@ const initCode =
 
 const transformHtml = async (file, src, dest) => {
   const html = await fse.readFile(path.resolve(src, file), {
-    encoding: 'utf-8'
+    encoding: 'utf-8',
   })
   let escaped = html.replace(/({{)/g, '\\{\\{')
   escaped = escaped.replace(/(}})/g, '\\}\\}')
@@ -73,7 +77,7 @@ const transformHtml = async (file, src, dest) => {
 
 const generateCode = (contents) => {
   let code = 'const urls = {}\n'
-  Object.keys(contents).forEach(url => {
+  Object.keys(contents).forEach((url) => {
     code = code.concat(`urls['/${url}'] = ${contents[url]}\n`)
   })
   code = code.concat('module.exports = urls')
@@ -81,31 +85,29 @@ const generateCode = (contents) => {
 }
 
 const transformHtmls = async (config) => {
-  await fse.ensureDir(config.serverDir)
+  await fse.ensureDir(config.serverDestDir)
   const files = await globby('**/*.html', { cwd: config.buildDir })
   const promises = files.map(async (file) => {
-    return await transformHtml(file, config.buildDir, config.serverDir)
+    return await transformHtml(file, config.buildDir, config.serverDestDir)
   })
   const jsFiles = await Promise.all(promises)
   const urls = {}
   files.forEach((file, index) => {
     urls[file] = `require('${jsFiles[index]}')`
   })
-  const htmlsFile = path.join(config.serverDir, '_htmls.js')
+  const htmlsFile = path.join(config.serverDestDir, '_htmls.js')
   const code = generateCode(urls)
   fse.writeFile(htmlsFile, code)
 }
 
 const createServer = async (config) => {
-  const hostConfig = {
-    redirectToAssets: config.redirectToAssets,
-    staticDirName: config.staticDirName,
-    cacheRedirect: config.cacheRedirect,
+  await fse.ensureDir(config.serverDestDir)
+
+  if (fse.existsSync(config.serverSrcDir)) {
+    await fse.copy(config.serverSrcDir, config.serverDestDir)
   }
-  await fse.ensureDir(config.serverDir)
-  const hostConfigPath = path.join(config.serverDir, 'config.js')
-  await fse.writeFile(hostConfigPath, `module.exports = ${JSON.stringify(hostConfig)}`)
-  const serverPath = path.join(config.serverDir, 'entry.js')
+
+  const serverPath = path.join(config.serverDestDir, 'entry.js')
   await fse.copy(path.join(__dirname, 'server.js'), serverPath)
 }
 

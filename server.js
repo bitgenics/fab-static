@@ -1,7 +1,21 @@
 const url_parse = require('url').parse
 const mime = require('mime-types')
 
-const config = require('./config')
+const HOUR_IN_SEC = 60 * 60
+
+const default_config = {
+  cacheRedirect: HOUR_IN_SEC,
+  cacheStatic: HOUR_IN_SEC,
+  staticDirPath: 'static',
+  redirectToAssets: true,
+}
+
+let custom_config = {}
+try {
+  custom_config = require('./fab.config.js')
+} catch (e) {}
+const config = Object.assign({}, default_config, custom_config)
+console.log({ config })
 
 const STATIC_DIR_PATH = `/${config.staticDirName}`
 
@@ -22,7 +36,7 @@ try {
 console.log({ files })
 console.log({ htmls })
 
-const getPath = url => {
+const getPath = (url) => {
   let pathname = url_parse(url).pathname
   if (pathname.endsWith('/')) {
     pathname += 'index.html'
@@ -30,12 +44,19 @@ const getPath = url => {
   return pathname
 }
 
-const getContentType = pathname => {
+const sendHeaders = (req, res, settings) => {
+  const headers = config.getHeaders ? config.getHeaders(req, res, settings) : []
+  for (header of headers) {
+    res.setHeader(header.name, header.value)
+  }
+}
+
+const getContentType = (pathname) => {
   const mimeType = mime.lookup(pathname)
   return mimeType ? mime.contentType(mimeType) : 'text/html; charset=utf-8'
 }
 
-const handleRedirectToAssets = (req, res, settings, next) => {
+const handleRedirectToAssets = (req, res, _, next) => {
   const pathname = getPath(req.url)
   if (
     config.redirectToAssets &&
@@ -55,10 +76,13 @@ const handleRedirectToAssets = (req, res, settings, next) => {
 const handleHTML = (req, res, settings, next) => {
   const pathname = getPath(req.url)
   console.log(req.headers)
-  const accepts_html = true//(req.headers.accept || '').match(/html/)
+  const accepts_html = true //(req.headers.accept || '').match(/html/)
   // console.log({pathname, accepts_html})
-  const html_handler =
-    htmls[pathname] ? htmls[pathname] : accepts_html ? htmls['/200.html'] : null
+  const html_handler = htmls[pathname]
+    ? htmls[pathname]
+    : accepts_html
+      ? htmls['/200.html']
+      : null
 
   if (html_handler) {
     res.statusCode = 200
@@ -66,7 +90,7 @@ const handleHTML = (req, res, settings, next) => {
     res.setHeader('Cache-Control', 'no-cache')
     const data = {
       settings: JSON.stringify(settings),
-      nonce: 'abcde12345'
+      nonce: 'abcde12345',
     }
     html_handler.renderToStream(res, data)
     return res.end()
@@ -94,7 +118,7 @@ const handle404 = (_, res) => {
   res.end()
 }
 
-const getRequestHandler = handlers => (req, res, settings) => {
+const getRequestHandler = (handlers) => (req, res, settings) => {
   let count = 0
   const handle = () => {
     console.log({ count })
@@ -110,12 +134,13 @@ const handler = getRequestHandler([
   handleRedirectToAssets,
   handleFiles,
   handleHTML,
-  handle404
+  handle404,
 ])
 
 const renderGet = (req, res, settings) => {
   try {
     console.log(getPath(req.url))
+    sendHeaders(req, res, settings)
     handler(req, res, settings)
   } catch (e) {
     if (!res.headersSent) {
