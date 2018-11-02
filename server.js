@@ -44,8 +44,12 @@ const getPath = (url) => {
   return pathname
 }
 
-const sendHeaders = (req, res, settings) => {
-  const headers = config.getHeaders ? config.getHeaders(req, res, settings) : []
+const sendHeaders = async (req, res, settings) => {
+  let headers = config.getHeaders ? config.getHeaders(req, res, settings) : []
+  headers = headers || []
+  if (headers && typeof headers.then == 'function') {
+    headers = await headers
+  }
   for (header of headers) {
     res.setHeader(header.name, header.value)
   }
@@ -137,10 +141,10 @@ const handler = getRequestHandler([
   handle404,
 ])
 
-const renderGet = (req, res, settings) => {
+const renderGet = async (req, res, settings) => {
   try {
     console.log(getPath(req.url))
-    sendHeaders(req, res, settings)
+    await sendHeaders(req, res, settings)
     handler(req, res, settings)
   } catch (e) {
     if (!res.headersSent) {
