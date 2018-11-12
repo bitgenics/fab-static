@@ -45,7 +45,9 @@ const getPath = (url) => {
 }
 
 const getHtmlHeaders = async (req, settings) => {
-  let headers = config.getHeaders ? config.getHtmlHeaders(req, settings) : []
+  let headers = config.getHtmlHeaders
+    ? config.getHtmlHeaders(req, settings)
+    : []
   console.log({ headers })
   headers = headers || []
   if (headers && typeof headers.then == 'function') {
@@ -59,7 +61,7 @@ const getContentType = (pathname) => {
   return mimeType ? mime.contentType(mimeType) : 'text/html; charset=utf-8'
 }
 
-const handleRedirectToAssets = (req, _, next) => {
+const handleRedirectToAssets = async (req, _, next) => {
   if (config.redirectToAssets && req.pathname.startsWith(STATIC_DIR_PATH)) {
     console.log('redirecting!')
     const location = req.pathname.replace(STATIC_DIR_PATH, '/_assets')
@@ -76,7 +78,7 @@ const handleRedirectToAssets = (req, _, next) => {
   }
 }
 
-const handleFiles = (req, _, next) => {
+const handleFiles = async (req, _, next) => {
   if (files[req.pathname]) {
     const content = files[req.pathname]
     //const charset = content instanceof String ? 'utf-8' : undefined
@@ -96,7 +98,7 @@ const handleFiles = (req, _, next) => {
   }
 }
 
-const handleHTML = (req, settings, next) => {
+const handleHTML = async (req, settings, next) => {
   const pathname = req.pathname
   console.log(req.headers)
   const accepts_html = true //(req.headers.accept || '').match(/html/)
@@ -108,10 +110,7 @@ const handleHTML = (req, settings, next) => {
     : null
 
   if (html_handler) {
-    const headers = {
-      'Cache-Control': 'no-cache',
-      'Content-Type': getContentType(pathname),
-    }
+    const headers = await getHtmlHeaders(req, settings)
     const data = {
       settings: JSON.stringify(settings),
       nonce: 'abcde12345',
@@ -127,22 +126,22 @@ const handleHTML = (req, settings, next) => {
   }
 }
 
-const handle404 = (_, res) => {
+const handle404 = async (_, res) => {
   return new Response(content, {
     status: 404,
   })
 }
 
-const getRequestHandler = (handlers) => (req, settings) => {
+const getRequestHandler = (handlers) => async (req, settings) => {
   let count = 0
-  const handle = () => {
+  const handle = async () => {
     console.log({ count })
-    return handlers[count](req, settings, () => {
+    return await handlers[count](req, settings, async () => {
       count++
-      return handle()
+      return await handle()
     })
   }
-  return handle()
+  return await handle()
 }
 
 const handler = getRequestHandler([
@@ -174,7 +173,7 @@ const render = async (req, settings) => {
   console.log({ req, settings })
   try {
     req.pathname = getPath(req.url)
-    return handler(req, settings)
+    return await handler(req, settings)
   } catch (e) {
     console.log(e)
     return new Response('An Error occured', {
