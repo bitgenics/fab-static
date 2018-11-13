@@ -111,6 +111,7 @@ const handleHTML = async (req, settings, next) => {
 
   if (html_handler) {
     const headers = await getHtmlHeaders(req, settings)
+    headers.set('Content-Type', 'text/html; charset=utf-8')
     const data = {
       settings: JSON.stringify(settings),
       nonce: 'abcde12345',
