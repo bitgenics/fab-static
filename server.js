@@ -17,7 +17,7 @@ try {
 const config = Object.assign({}, default_config, custom_config)
 console.log({ config })
 
-const STATIC_DIR_PATH = `/${config.staticDirName}`
+const STATIC_DIR_PATH = `/${config.staticDirPath}`
 
 let files = {}
 let htmls = {}
@@ -62,10 +62,7 @@ const getContentType = (pathname) => {
 
 const handleRedirectToAssets = (req, res, _, next) => {
   const pathname = getPath(req.url)
-  if (
-    config.redirectToAssets &&
-    pathname.startsWith(`/${config.staticDirName}`)
-  ) {
+  if (config.redirectToAssets && pathname.startsWith(STATIC_DIR_PATH)) {
     console.log('redirecting!')
     const location = pathname.replace(STATIC_DIR_PATH, '/_assets')
     res.statusCode = 302
@@ -85,8 +82,8 @@ const handleHTML = (req, res, settings, next) => {
   const html_handler = htmls[pathname]
     ? htmls[pathname]
     : accepts_html
-      ? htmls['/200.html']
-      : null
+    ? htmls['/200.html']
+    : null
 
   if (html_handler) {
     res.statusCode = 200
