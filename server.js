@@ -152,24 +152,6 @@ const handler = getRequestHandler([
   handle404,
 ])
 
-const renderGet = async (req, res, settings) => {
-  try {
-    console.log(getPath(req.url))
-    const headers = await getHeaders(req, settings)
-    for (header of headers) {
-      res.setHeader(header.name, header.value)
-    }
-    handler(req, res, settings)
-  } catch (e) {
-    if (!res.headersSent) {
-      res.statusCode = 500
-    }
-    console.log(e)
-  } finally {
-    res.end()
-  }
-}
-
 const render = async (req, settings) => {
   console.log({ req, settings })
   try {
@@ -184,4 +166,4 @@ const render = async (req, settings) => {
   }
 }
 
-module.exports = { renderGet, render }
+module.exports = { render }
