@@ -53,11 +53,6 @@ const getHtmlHeaders = async (req, settings) => {
   return headers
 }
 
-const getContentType = (pathname) => {
-  const mimeType = mime.lookup(pathname)
-  return mimeType ? mime.contentType(mimeType) : 'text/html; charset=utf-8'
-}
-
 const handleRedirectToAssets = async (req, _, next) => {
   if (config.redirectToAssets && req.pathname.startsWith(STATIC_DIR_PATH)) {
     console.log('redirecting!')
