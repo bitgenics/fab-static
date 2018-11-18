@@ -1,6 +1,3 @@
-const url_parse = require('url').parse
-const mime = require('mime-types')
-
 const HOUR_IN_SEC = 60 * 60
 
 const default_config = {
@@ -37,7 +34,7 @@ console.log({ files })
 console.log({ htmls })
 
 const getPath = (url) => {
-  let pathname = url_parse(url).pathname
+  let pathname = new URL(url).pathname
   if (pathname.endsWith('/')) {
     pathname += 'index.html'
   }
@@ -81,15 +78,11 @@ const handleRedirectToAssets = async (req, _, next) => {
 const handleFiles = async (req, _, next) => {
   if (files[req.pathname]) {
     const content = files[req.pathname]
-    //const charset = content instanceof String ? 'utf-8' : undefined
-    const headers = {
-      'Cache-Control': `public, max-age=${config.cacheStatic}`,
-      'Content-Type': getContentType(req.pathname),
-    }
+
     console.log({ content })
-    const response = new Response(content, {
+    const response = new Response(content.bytes, {
       status: 200,
-      headers,
+      headers: content.headers,
     })
     console.log({ response })
     return response
