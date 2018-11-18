@@ -1,18 +1,39 @@
 const fs = require('fs')
 const http = require('http')
 const url_parse = require('url').parse
+const vm = require('vm')
 const mime = require('mime-types')
 const fetch = require('node-fetch')
 const path = require('path')
 
-global.fetch = fetch
-global.Request = fetch.Request
-global.Response = fetch.Response
-global.Headers = fetch.Headers
-
 const dir = path.resolve(process.argv[2] || './test/fab-dist')
+const file = `${dir}/server/bundle.js`
+const src = fs.readFileSync(file)
 
-const fab = require(`${dir}/server/bundle.js`)
+const { Request } = fetch
+
+const sandbox = {
+  fetch: fetch,
+  Request: fetch.Request,
+  Response: fetch.Response,
+  Headers: fetch.Headers,
+  URL: URL,
+  console: {
+    log: console.log,
+  },
+  NODE_ENV: 'server',
+  process: {
+    env: {
+      NODE_ENV: 'server',
+    },
+  },
+}
+
+const script = new vm.Script(src)
+const exp = {}
+const ctx = Object.assign({}, sandbox, { module: { exports: exp } })
+const renderer = script.runInNewContext(ctx)
+console.log({ renderer })
 
 const getContentType = (pathname) => {
   const mimeType = mime.lookup(pathname)
@@ -41,7 +62,7 @@ http
         method,
         headers,
       })
-      const fetch_res = await fab.render(fetch_req, {
+      const fetch_res = await renderer.render(fetch_req, {
         injected: 'variables',
         should: 'work!',
       })
