@@ -14,7 +14,7 @@ try {
 const config = Object.assign({}, default_config, custom_config)
 console.log({ config })
 
-const STATIC_DIR_PATH = `/${config.staticDirName}`
+const STATIC_DIR_PATH = `/${config.staticDirPath}`
 
 let files = {}
 let htmls = {}
