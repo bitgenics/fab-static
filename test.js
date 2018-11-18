@@ -51,7 +51,6 @@ http
         fetch_res.statusText,
         mapToObj(fetch_res.headers)
       )
-      const body = fetch_res.body
       const blob = await fetch_res.arrayBuffer()
       res.write(new Buffer(blob))
       res.end()
