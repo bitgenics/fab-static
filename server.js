@@ -99,7 +99,7 @@ const handleHTML = async (req, settings, next) => {
   const html_handler = htmls[pathname]
     ? htmls[pathname]
     : accepts_html
-    ? htmls['/200.html']
+    ? htmls['/_catch_all.html']
     : null
 
   if (html_handler) {
