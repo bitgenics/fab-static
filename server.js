@@ -42,15 +42,12 @@ const getPath = (url) => {
 }
 
 const getHtmlHeaders = async (req, settings) => {
-  let headers = config.getHtmlHeaders
-    ? config.getHtmlHeaders(req, settings)
-    : []
-  console.log({ headers })
-  headers = headers || []
+  let headers = config.getHtmlHeaders && config.getHtmlHeaders(req, settings)
   if (headers && typeof headers.then == 'function') {
     headers = await headers
   }
-  return headers
+  headers = headers || {}
+  return headers instanceof Headers ? headers : new Headers(headers)
 }
 
 const handleRedirectToAssets = async (req, _, next) => {
