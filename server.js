@@ -116,12 +116,12 @@ const handleHTML = async (req, settings, next) => {
     })
     return response
   } else {
-    next()
+    return next()
   }
 }
 
-const handle404 = async (_, res) => {
-  return new Response(content, {
+const handle404 = async () => {
+  return new Response('Content not Found', {
     status: 404,
   })
 }
