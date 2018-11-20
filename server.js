@@ -1,12 +1,9 @@
-const url_parse = require('url').parse
-const mime = require('mime-types')
-
 const HOUR_IN_SEC = 60 * 60
 
 const default_config = {
   cacheRedirect: HOUR_IN_SEC,
   cacheStatic: HOUR_IN_SEC,
-  staticDirPath: 'static',
+  staticDirName: 'static',
   redirectToAssets: true,
 }
 
@@ -37,98 +34,100 @@ console.log({ files })
 console.log({ htmls })
 
 const getPath = (url) => {
-  let pathname = url_parse(url).pathname
+  let pathname = new URL(url).pathname
   if (pathname.endsWith('/')) {
     pathname += 'index.html'
   }
   return pathname
 }
 
-const sendHeaders = async (req, res, settings) => {
-  let headers = config.getHeaders ? config.getHeaders(req, res, settings) : []
-  headers = headers || []
+const getHtmlHeaders = async (req, settings) => {
+  let headers = config.getHtmlHeaders && config.getHtmlHeaders(req, settings)
   if (headers && typeof headers.then == 'function') {
     headers = await headers
   }
-  for (header of headers) {
-    res.setHeader(header.name, header.value)
-  }
+  headers = headers || {}
+  return headers instanceof Headers ? headers : new Headers(headers)
 }
 
-const getContentType = (pathname) => {
-  const mimeType = mime.lookup(pathname)
-  return mimeType ? mime.contentType(mimeType) : 'text/html; charset=utf-8'
-}
-
-const handleRedirectToAssets = (req, res, _, next) => {
-  const pathname = getPath(req.url)
-  if (config.redirectToAssets && pathname.startsWith(STATIC_DIR_PATH)) {
+const handleRedirectToAssets = async (req, _, next) => {
+  if (config.redirectToAssets && req.pathname.startsWith(STATIC_DIR_PATH)) {
     console.log('redirecting!')
-    const location = pathname.replace(STATIC_DIR_PATH, '/_assets')
-    res.statusCode = 302
-    res.setHeader('Cache-Control', `public, max-age=${config.cacheRedirect}`)
-    res.setHeader('Location', location)
-    res.end()
+    const location = req.pathname.replace(STATIC_DIR_PATH, '/_assets')
+    const headers = {
+      'Cache-Control': `public, max-age=${config.cacheRedirect}`,
+      Location: location,
+    }
+    return new Response('', {
+      status: 302,
+      headers,
+    })
   } else {
-    next()
+    return next()
   }
 }
 
-const handleHTML = (req, res, settings, next) => {
-  const pathname = getPath(req.url)
+const handleFiles = async (req, _, next) => {
+  if (files[req.pathname]) {
+    const content = files[req.pathname]
+
+    console.log({ content })
+    const response = new Response(content.bytes, {
+      status: 200,
+      headers: content.headers,
+    })
+    console.log({ response })
+    return response
+  } else {
+    return next()
+  }
+}
+
+const handleHTML = async (req, settings, next) => {
+  const pathname = req.pathname
   console.log(req.headers)
   const accepts_html = true //(req.headers.accept || '').match(/html/)
   // console.log({pathname, accepts_html})
   const html_handler = htmls[pathname]
     ? htmls[pathname]
     : accepts_html
-    ? htmls['/200.html']
+    ? htmls['/_catch_all.html']
     : null
 
   if (html_handler) {
-    res.statusCode = 200
-    res.setHeader('Content-Type', getContentType(pathname))
-    res.setHeader('Cache-Control', 'no-cache')
+    const headers = await getHtmlHeaders(req, settings)
+    headers.set('Content-Type', 'text/html; charset=utf-8')
     const data = {
       settings: JSON.stringify(settings),
       nonce: 'abcde12345',
     }
-    html_handler.renderToStream(res, data)
-    return res.end()
+    const content = html_handler.renderToBuffer(data)
+    const response = new Response(content, {
+      status: 200,
+      headers,
+    })
+    return response
   } else {
-    next()
+    return next()
   }
 }
 
-const handleFiles = (req, res, _, next) => {
-  const pathname = getPath(req.url)
-  if (files[pathname]) {
-    const content = files[pathname]
-    const charset = content instanceof String ? 'utf-8' : undefined
-    res.statusCode = 200
-    res.setHeader('Content-Type', getContentType(pathname))
-    res.setHeader('Cache-Control', `public, max-age=${config.cacheStatic}`)
-    res.end(content, charset)
-  } else {
-    next()
-  }
+const handle404 = async () => {
+  return new Response('Content not Found', {
+    status: 404,
+  })
 }
 
-const handle404 = (_, res) => {
-  res.statusCode = 404
-  res.end()
-}
-
-const getRequestHandler = (handlers) => (req, res, settings) => {
+const getRequestHandler = (handlers) => async (req, settings) => {
   let count = 0
-  const handle = () => {
+  const handle = async () => {
     console.log({ count })
-    handlers[count](req, res, settings, () => {
+    return await handlers[count](req, settings, async () => {
       count++
-      handle()
+      return await handle()
     })
   }
-  handle()
+  return await handle()
 }
 
 const handler = getRequestHandler([
@@ -138,19 +137,18 @@ const handler = getRequestHandler([
   handle404,
 ])
 
-const renderGet = async (req, res, settings) => {
+const render = async (req, settings) => {
+  console.log({ req, settings })
   try {
-    console.log(getPath(req.url))
-    await sendHeaders(req, res, settings)
-    handler(req, res, settings)
+    req.pathname = getPath(req.url)
+    return await handler(req, settings)
   } catch (e) {
-    if (!res.headersSent) {
-      res.statusCode = 500
-    }
     console.log(e)
-  } finally {
-    res.end()
+    return new Response('An Error occured', {
+      status: 500,
+      statusText: 'Internal Server Error',
+    })
   }
 }
 
-module.exports = { renderGet }
+module.exports = { render }

@@ -3,28 +3,36 @@ const util = require('util')
 
 const fse = require('fs-extra')
 const globby = require('globby')
+const mime = require('mime-types')
 const webpack = require('webpack')
 const zip = util.promisify(require('deterministic-zip'))
+
+const HOUR_IN_SEC = 60 * 60
 
 const createWebpackConfig = require('./webpack.config.server.js')
 
 const readIncludes = async (includesDir) => {
   const files = await globby(['**/*'], { cwd: includesDir })
-  let contents = files.map(file => {
+  let contents = files.map((file) => {
     file = path.join(includesDir, file)
     return fse.readFile(file, { encoding: 'base64' })
   })
   contents = await Promise.all(contents)
   const urls = {}
   files.forEach((file, index) => {
-    urls[file] = `Buffer.from('${contents[index]}', 'base64')`
+    const headers = {
+      'Cache-Control': `max-age=${HOUR_IN_SEC}`,
+      'Content-Type': mime.lookup(file),
+    }
+    const bytes = `Buffer.from('${contents[index]}', 'base64')`
+    urls[file] = `{ bytes: ${bytes}, headers: ${JSON.stringify(headers)} }`
   })
   return urls
 }
 
 const createImportCode = (contents) => {
   let code = 'const urls = {}\n'
-  Object.keys(contents).forEach(url => {
+  Object.keys(contents).forEach((url) => {
     code = code.concat(`urls['/${url}'] = ${contents[url]}\n`)
   })
   code = code.concat('module.exports = urls')
@@ -81,7 +89,7 @@ const doZip = async (distDir) => {
   const zipfile = path.join(distDir, 'fab.zip')
   const options = {
     includes: ['./server/**', './_assets/**'],
-    cwd: distDir
+    cwd: distDir,
   }
   await zip(distDir, zipfile, options)
 }

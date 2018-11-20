@@ -95,6 +95,7 @@ const transformHtmls = async (config) => {
   files.forEach((file, index) => {
     urls[file] = `require('${jsFiles[index]}')`
   })
+  urls['_catch_all.html'] = urls['_catch_all.html'] || urls['index.html']
   const htmlsFile = path.join(config.serverDestDir, '_htmls.js')
   const code = generateCode(urls)
   fse.writeFile(htmlsFile, code)

@@ -7,7 +7,7 @@ const createConfig = (srcDir, targetDir) => {
     entry: {
       bundle: [path.resolve(srcDir, 'entry.js')],
     },
-    target: 'node',
+    target: 'webworker',
     resolve: {
       alias: {
         _includes: path.resolve(srcDir, '_includes.js'),
