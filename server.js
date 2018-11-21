@@ -14,7 +14,7 @@ try {
 const config = Object.assign({}, default_config, custom_config)
 console.log({ config })
 
-const STATIC_DIR_PATH = `/${config.staticDirPath}`
+const STATIC_DIR_PATH = `/${config.staticDirName}`
 
 let files = {}
 let htmls = {}
@@ -30,8 +30,7 @@ try {
   console.log('_htmls,', e)
 }
 
-console.log({ files })
-console.log({ htmls })
+console.log({ files: Object.keys(files), htmls: Object.keys(htmls) })
 
 const getPath = (url) => {
   let pathname = new URL(url).pathname
@@ -50,7 +49,10 @@ const getHtmlHeaders = async (req, settings) => {
   return headers instanceof Headers ? headers : new Headers(headers)
 }
 
-const handleRedirectToAssets = async (req, _, next) => {
+const handleRedirectToAssets = async (req) => {
+  //console.log('handleRedirectToAssets')
+  //console.log(STATIC_DIR_PATH)
+  //console.log(req.pathname)
   if (config.redirectToAssets && req.pathname.startsWith(STATIC_DIR_PATH)) {
     console.log('redirecting!')
     const location = req.pathname.replace(STATIC_DIR_PATH, '/_assets')
@@ -62,37 +64,35 @@ const handleRedirectToAssets = async (req, _, next) => {
       status: 302,
       headers,
     })
-  } else {
-    return next()
   }
 }
 
-const handleFiles = async (req, _, next) => {
+const handleFiles = async (req) => {
+  //console.log('handleFiles')
   if (files[req.pathname]) {
     const content = files[req.pathname]
 
-    console.log({ content })
+    //console.log({ content })
     const response = new Response(content.bytes, {
       status: 200,
       headers: content.headers,
     })
-    console.log({ response })
+    //console.log({ response })
     return response
-  } else {
-    return next()
   }
 }
 
-const handleHTML = async (req, settings, next) => {
+const handleHTML = async (req, settings) => {
+  //console.log('handleHTML')
   const pathname = req.pathname
-  console.log(req.headers)
+  //console.log(req.headers)
   const accepts_html = true //(req.headers.accept || '').match(/html/)
   // console.log({pathname, accepts_html})
   const html_handler = htmls[pathname]
     ? htmls[pathname]
     : accepts_html
-    ? htmls['/_catch_all.html']
-    : null
+      ? htmls['/_catch_all.html']
+      : null
 
   if (html_handler) {
     const headers = await getHtmlHeaders(req, settings)
@@ -102,32 +102,25 @@ const handleHTML = async (req, settings, next) => {
       nonce: 'abcde12345',
     }
     const content = html_handler.renderToBuffer(data)
-    const response = new Response(content, {
+    return new Response(content, {
       status: 200,
       headers,
     })
-    return response
-  } else {
-    return next()
   }
 }
 
 const handle404 = async () => {
+  //console.log('handle404')
   return new Response('Content not Found', {
     status: 404,
   })
 }
 
 const getRequestHandler = (handlers) => async (req, settings) => {
-  let count = 0
-  const handle = async () => {
-    console.log({ count })
-    return await handlers[count](req, settings, async () => {
-      count++
-      return await handle()
-    })
+  for (const handler of handlers) {
+    const response = await handler(req, settings)
+    if (typeof response !== 'undefined') return response
   }
-  return await handle()
 }
 
 const handler = getRequestHandler([
@@ -138,9 +131,10 @@ const handler = getRequestHandler([
 ])
 
 const render = async (req, settings) => {
-  console.log({ req, settings })
+  //console.log({ req, settings })
   try {
     req.pathname = getPath(req.url)
+    console.log(req.pathname)
     return await handler(req, settings)
   } catch (e) {
     console.log(e)
