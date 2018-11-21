@@ -1,6 +1,6 @@
 {
   "name": "@bitgenics/fab-static",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Front-end Application Bundle generator for (mostly) static applications.",
   "main": "index.js",
   "bin": {
