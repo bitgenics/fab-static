@@ -13,9 +13,10 @@
   "author": "Erwin van der Koogh <hello@bitgenics.io>",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.4.1",
     "cheerio": "^1.0.0-rc.2",
     "deterministic-zip": "^1.0.5",
-    "fs-extra": "^7.0.0",
+    "fs-extra": "^7.0.1",
     "globby": "^8.0.1",
     "mime-types": "^2.1.19",
     "webpack": "^4.17.1"

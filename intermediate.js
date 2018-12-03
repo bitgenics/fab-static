@@ -51,26 +51,28 @@ const copyIncludes = async (config) => {
   )
 }
 
-const initCode =
-  'var ENV_SETTINGS = {{settings}}\n \
-  window.EnvSettings = ENV_SETTINGS\n \
-  var CSP_NONCE = "{{nonce}}"\n \
-  window.CspNonce = CSP_NONCE\n'
+const initCode = `
+  window.ENV_SETTINGS = JSON.parse("<%=settings%>")
+  window.CSP_NONCE = "<%=nonce%>" 
+`
 
 const transformHtml = async (file, src, dest) => {
   const html = await fse.readFile(path.resolve(src, file), {
     encoding: 'utf-8',
   })
-  let escaped = html.replace(/({{)/g, '\\{\\{')
-  escaped = escaped.replace(/(}})/g, '\\}\\}')
-  const $ = cheerio.load(escaped)
-  $('head').prepend(
-    `<script type="application/javascript">${initCode}</script>`
-  )
-  $('script').attr('nonce', '{{nonce}}')
+  // let escaped = html.replace(/({{)/g, '\\{\\{')
+  // escaped = escaped.replace(/(}})/g, '\\}\\}')
+  // const $ = cheerio.load(html)
+  // $('head').prepend(
+  //   `<script type="application/javascript">${initCode}</script>`
+  // )
+  // $('script').attr('nonce', '{{nonce}}')
 
-  const js = templ($.html())
+  // const js = templ($.html())
+  const js = templ(html)
+
   const jsFile = path.resolve(dest, `${file}.js`)
+  await fse.ensureFile(jsFile)
   await fse.writeFile(jsFile, js)
   return jsFile
 }

@@ -27,9 +27,9 @@ const template = (content) => {
     return writeText(fragment, index)
   })
 
-  const code = `const text = []
-${text.filter((item) => item).join('\n')}
-text[${text.length}] = Buffer.from('${StringToBuffer(rest)}', 'base64')
+  const code = `const text = [
+    Buffer.from('${StringToBuffer(content)}', 'base64')
+  ]
 
 const renderToStream = (out, data) => {
   text.forEach((item) => {
