@@ -61,8 +61,7 @@ const bundleAssets = async (packageDir, distDir) => {
 }
 
 const webpackerize = async (tmpServerDir, distDir) => {
-  const distServerDir = path.join(distDir, 'server')
-  const server_config = createWebpackConfig(tmpServerDir, distServerDir)
+  const server_config = createWebpackConfig(tmpServerDir, distDir)
 
   return new Promise((resolve, reject) => {
     webpack(server_config, (err, stats) => {

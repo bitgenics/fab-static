@@ -5,7 +5,7 @@ const createConfig = (srcDir, targetDir) => {
   const options = {
     mode: 'production',
     entry: {
-      bundle: [path.resolve(srcDir, 'entry.js')],
+      server: [path.resolve(srcDir, 'entry.js')],
     },
     target: 'webworker',
     resolve: {
