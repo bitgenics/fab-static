@@ -1,2 +1,1 @@
-# fab-static
-Front-end Application Bundle generator for (mostly) static applications.
+[DEPRECATED] See [@fab/static](https://github.com/fab-spec/fab/tree/master/packages/fab-static)
