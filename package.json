@@ -17,7 +17,7 @@
     "cheerio": "^1.0.0-rc.2",
     "deterministic-zip": "^1.0.5",
     "fs-extra": "^7.0.1",
-    "globby": "^8.0.1",
+    "globby": "^10.0.1",
     "mime-types": "^2.1.19",
     "webpack": "^4.17.1"
   },
